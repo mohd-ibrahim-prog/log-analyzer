@@ -1,16 +1,35 @@
-# Log Analyzer Web App (Cybersecurity Project)
 
-This is a Flask-based web application that analyzes log files to detect suspicious activity.
+# 🔐 LogSentinel – Log Analysis & Threat Detection System
 
-## Features
-- Upload log files
-- Detect most active users and IPs
-- Identify suspicious users
-- Count errors (HTTP 4xx, 5xx)
+A Flask-based web application that analyzes server log files to detect suspicious activity, classify risk levels, and generate security reports.
 
-## Tech Used
+---
+
+## 🚀 Features
+
+- 📂 Upload log files (.log / .txt)
+- 🔍 Analyze user/IP activity
+- ⚠️ Detect suspicious behavior
+- 📊 Risk scoring system:
+  - 🟢 Safe (1–5 requests)
+  - 🟡 Low Risk (6–10)
+  - 🟠 Medium Risk (11–15)
+  - 🔴 High Risk (16+)
+- 📄 Generate downloadable PDF reports
+- 📈 Dashboard with insights
+- 🔐 Session-based user privacy (no data leakage)
+
+---
+
+## 🛠️ Tech Stack
+
 - Python
 - Flask
+- Pandas
+- Matplotlib
+- ReportLab
+- HTML, CSS
+
 
 ## How to Run
 1. Install Flask: pip install flask
@@ -18,4 +37,11 @@ This is a Flask-based web application that analyzes log files to detect suspicio
 3. Open: http://127.0.0.1:5000/
 
 ## Use Case
-Helps identify potential security threats from log data.
+This project helps identify potential cybersecurity threats from server logs and can be extended for SIEM-like systems.
+
+## Project Highlights
+Implemented real-world log analysis logic
+Designed a risk classification system
+Ensured user data isolation using Flask sessions
+Deployed on cloud using Render
+
