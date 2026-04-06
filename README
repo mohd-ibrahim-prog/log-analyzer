@@ -1,0 +1,21 @@
+# Log Analyzer Web App (Cybersecurity Project)
+
+This is a Flask-based web application that analyzes log files to detect suspicious activity.
+
+## Features
+- Upload log files
+- Detect most active users and IPs
+- Identify suspicious users
+- Count errors (HTTP 4xx, 5xx)
+
+## Tech Used
+- Python
+- Flask
+
+## How to Run
+1. Install Flask: pip install flask
+2. Run: python app.py
+3. Open: http://127.0.0.1:5000/
+
+## Use Case
+Helps identify potential security threats from log data.

@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — LogSentinel{% endblock %}
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block head_styles %}
+<style>
+.hero {
+  background:linear-gradient(130deg,#0F2744 0%,#1B3A5C 40%,#2563EB 100%);
+  border-radius:16px; padding:52px 48px; position:relative; overflow:hidden; margin-bottom:28px;
+}
+.hero::before {
+  content:''; position:absolute; top:-80px; right:-80px;
+  width:360px; height:360px; border-radius:50%;
+  background:rgba(255,255,255,.04); pointer-events:none;
+}
+.hero::after {
+  content:''; position:absolute; bottom:-100px; right:80px;
+  width:240px; height:240px; border-radius:50%;
+  background:rgba(37,99,235,.15); pointer-events:none;
+}
+.hero-badge {
+  display:inline-flex; align-items:center; gap:6px;
+  background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18);
+  border-radius:20px; padding:5px 14px;
+  font-family:var(--mono); font-size:10px; color:rgba(255,255,255,.85);
+  letter-spacing:1px; margin-bottom:20px;
+}
+.hero-badge i { font-size:8px; color:#86EFAC; animation:pip 2s ease infinite; }
+.hero h1 { font-size:34px; font-weight:800; color:#fff; line-height:1.2; margin-bottom:14px; letter-spacing:-.5px; }
+.hero h1 em { color:#93C5FD; font-style:normal; }
+.hero p { font-size:15px; color:rgba(255,255,255,.62); line-height:1.7; max-width:580px; margin-bottom:32px; }
+.hero-feats { display:flex; gap:24px; flex-wrap:wrap; }
+.hero-feat { display:flex; align-items:center; gap:8px; font-size:13px; color:rgba(255,255,255,.75); font-weight:500; }
+.hero-feat-icon {
+  width:28px; height:28px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15);
+  border-radius:7px; display:flex; align-items:center; justify-content:center;
+  font-size:12px; color:#93C5FD; flex-shrink:0;
+}
+.stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+.stat-card {
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh);
+  padding:22px 20px; position:relative; overflow:hidden; transition:transform .2s, box-shadow .2s;
+}
+.stat-card:hover { transform:translateY(-2px); box-shadow:var(--sh-md); }
+.stat-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; }
+.sc-blue::after  { background:linear-gradient(90deg,#2563EB,#60A5FA); }
+.sc-red::after   { background:linear-gradient(90deg,#DC2626,#F87171); }
+.sc-amber::after { background:linear-gradient(90deg,#D97706,#FCD34D); }
+.stat-icon { width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:15px; margin-bottom:14px; }
+.sc-blue  .stat-icon { background:var(--blue-lt);  color:var(--blue); }
+.sc-red   .stat-icon { background:var(--red-lt);   color:var(--red); }
+.sc-amber .stat-icon { background:var(--amber-lt); color:var(--amber); }
+.stat-label { font-size:11px; font-weight:600; color:var(--muted); letter-spacing:.4px; margin-bottom:5px; }
+.stat-value { font-size:30px; font-weight:800; color:var(--navy); line-height:1; }
+.overview-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh); padding:22px; margin-bottom:24px; }
+.oc-title { font-size:15px; font-weight:700; color:var(--navy); }
+.oc-sub   { font-size:12px; color:var(--muted); margin-top:3px; }
+.quick-btns { display:flex; gap:12px; margin-bottom:28px; flex-wrap:wrap; }
+.quick-btn {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:11px 20px; border-radius:9px; font-family:var(--sans);
+  font-size:13.5px; font-weight:600; text-decoration:none;
+  transition:opacity .18s, transform .15s;
+}
+.quick-btn:hover { opacity:.88; transform:translateY(-1px); }
+.qb-primary { background:var(--blue); color:#fff; }
+.qb-outline { background:var(--surface); color:var(--slate); border:1.5px solid var(--border2); }
+.qb-outline:hover { border-color:var(--blue); color:var(--blue); }
+@media (max-width:900px) { .stat-grid { grid-template-columns:repeat(2,1fr); } .hero { padding:36px 28px; } .hero h1 { font-size:26px; } }
+@media (max-width:520px)  { .stat-grid { grid-template-columns:1fr; } .hero-feats { display:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero fu">
+  <div class="hero-badge"><i class="fa-solid fa-circle"></i> LIVE ANALYSIS SYSTEM</div>
+  <h1>LogSentinel &ndash; <em>Threat Intelligence</em> Dashboard</h1>
+  <p>Upload server log files and get instant security intelligence. Detect suspicious users, analyse IP activity, identify HTTP errors, and generate professional PDF reports in seconds.</p>
+  <div class="hero-feats">
+    <div class="hero-feat"><div class="hero-feat-icon"><i class="fa-solid fa-bolt"></i></div> Instant Analysis</div>
+    <div class="hero-feat"><div class="hero-feat-icon"><i class="fa-solid fa-chart-bar"></i></div> Visual Charts</div>
+    <div class="hero-feat"><div class="hero-feat-icon"><i class="fa-solid fa-user-secret"></i></div> Threat Detection</div>
+    <div class="hero-feat"><div class="hero-feat-icon"><i class="fa-solid fa-file-pdf"></i></div> PDF Reports</div>
+    <div class="hero-feat"><div class="hero-feat-icon"><i class="fa-solid fa-gauge-high"></i></div> Risk Scoring</div>
+  </div>
+</div>
+
+<div class="stat-grid fu fu1">
+  <div class="stat-card sc-blue">
+    <div class="stat-icon"><i class="fa-solid fa-file-lines"></i></div>
+    <div class="stat-label">TOTAL LOGS ANALYSED</div>
+    <div class="stat-value">{{ total_logs }}</div>
+  </div>
+  <div class="stat-card sc-red">
+    <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <div class="stat-label">TOTAL ERRORS FOUND</div>
+    <div class="stat-value">{{ total_errors }}</div>
+  </div>
+  <div class="stat-card sc-amber">
+    <div class="stat-icon"><i class="fa-solid fa-user-secret"></i></div>
+    <div class="stat-label">SUSPICIOUS USERS</div>
+    <div class="stat-value">{{ total_suspicious }}</div>
+  </div>
+</div>
+
+<div class="quick-btns fu fu2">
+  <a href="{{ url_for('upload') }}" class="quick-btn qb-primary">
+    <i class="fa-solid fa-cloud-arrow-up"></i> Analyse a Log File
+  </a>
+  <a href="{{ url_for('history') }}" class="quick-btn qb-outline">
+    <i class="fa-solid fa-clock-rotate-left"></i> View All Reports
+  </a>
+</div>
+
+{% if total_logs > 0 %}
+<div class="overview-card fu fu3">
+  <div style="margin-bottom:16px;">
+    <div class="oc-title">Historical Activity</div>
+    <div class="oc-sub">Requests &amp; Errors across last {{ recent_rows|length }} analyses</div>
+  </div>
+  <div style="position:relative;height:220px;">
+    <canvas id="overviewChart"
+            data-labels="{{ chart_labels }}"
+            data-errors="{{ chart_errors_dash }}"
+            data-reqs="{{ chart_reqs_dash }}"></canvas>
+  </div>
+</div>
+
+<div class="section-hdr fu fu3">
+  <div class="section-hdr-icon shi-navy"><i class="fa-solid fa-list"></i></div>
+  <span class="section-hdr-title">Recent Analyses</span>
+  <a href="{{ url_for('history') }}" class="section-hdr-sub" style="color:var(--blue);text-decoration:none;">View all &rarr;</a>
+</div>
+<div class="card fu fu4" style="overflow:hidden;margin-bottom:0;">
+  <table class="htable">
+    <thead><tr><th>File</th><th>Date</th><th>Requests</th><th>Errors</th><th>Suspicious</th><th>Report</th></tr></thead>
+    <tbody>
+      {% for row in recent_rows %}
+      <tr>
+        <td><div class="fname-cell"><div class="fname-ico"><i class="fa-solid fa-file-lines"></i></div><span class="fname-txt">{{ row.filename }}</span></div></td>
+        <td><span class="date-txt">{{ row.analyzed_at }}</span></td>
+        <td><span class="badge bdg-blue">{{ row.total_requests }}</span></td>
+        <td>{% if row.error_count > 0 %}<span class="badge bdg-red">{{ row.error_count }}</span>{% else %}<span class="badge bdg-green">0</span>{% endif %}</td>
+        <td>{% if row.suspicious_count > 0 %}<span class="badge bdg-red">{{ row.suspicious_count }}</span>{% else %}<span class="badge bdg-green">0</span>{% endif %}</td>
+        <td><a href="{{ url_for('download', report_id=row.id) }}" class="btn-dl"><i class="fa-solid fa-file-pdf" style="color:#DC2626;"></i> PDF</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card card-pad fu fu2" style="text-align:center;padding:48px 24px;">
+  <div style="width:60px;height:60px;background:var(--blue-lt);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--blue);margin:0 auto 16px;">
+    <i class="fa-solid fa-shield-halved"></i>
+  </div>
+  <div style="font-size:17px;font-weight:600;color:var(--navy);margin-bottom:8px;">Ready for your first analysis</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Upload a .log or .txt file to get started.</div>
+  <a href="{{ url_for('upload') }}" class="quick-btn qb-primary" style="display:inline-flex;width:auto;">
+    <i class="fa-solid fa-cloud-arrow-up"></i> Analyse Now
+  </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+function buildOverviewChart() {
+  var canvas = document.getElementById('overviewChart');
+  if (!canvas) { return; }
+  var labels, errors, reqs;
+  try {
+    labels = JSON.parse(canvas.getAttribute('data-labels') || '[]');
+    errors = JSON.parse(canvas.getAttribute('data-errors') || '[]');
+    reqs   = JSON.parse(canvas.getAttribute('data-reqs')   || '[]');
+  } catch(e) { return; }
+  if (!labels.length) { return; }
+  new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        { label:'Total Requests', data:reqs,   backgroundColor:'rgba(37,99,235,.18)',  borderColor:'#2563EB', borderWidth:1.5, borderRadius:5, borderSkipped:false },
+        { label:'Errors',         data:errors, backgroundColor:'rgba(220,38,38,.18)', borderColor:'#DC2626', borderWidth:1.5, borderRadius:5, borderSkipped:false }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      animation:{ duration:800, easing:'easeOutQuart' },
+      plugins:{
+        legend:{ display:true, position:'top', labels:{ font:{size:12}, color:'#475569', boxWidth:12, boxHeight:12, padding:16 } },
+        tooltip:{ backgroundColor:'#0F2744', titleColor:'#94A3B8', bodyColor:'#F1F5F9', padding:11, cornerRadius:8 }
+      },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#94A3B8',font:{size:11}}, border:{color:'#E2E8F0'} },
+        y:{ beginAtZero:true, grid:{color:'#F8FAFC'}, ticks:{color:'#94A3B8',precision:0,font:{size:11}}, border:{color:'#E2E8F0',dash:[4,4]} }
+      }
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded', buildOverviewChart);
+</script>
+{% endblock %}

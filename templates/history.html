@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Reports History — LogSentinel{% endblock %}
+{% block topbar_title %}Reports History{% endblock %}
+
+{% block head_styles %}
+<style>
+.search-wrap { position:relative; flex:1; max-width:320px; }
+.search-wrap i { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:13px; }
+.search-input {
+  width:100%; padding:9px 14px 9px 36px; border:1.5px solid var(--border);
+  border-radius:8px; font-family:var(--sans); font-size:13px; color:var(--text);
+  background:var(--surface); outline:none; transition:border-color .18s;
+}
+.search-input:focus { border-color:var(--blue); }
+.btn-clear {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:8px 14px; border-radius:7px; background:var(--red-lt);
+  color:var(--red); border:1px solid var(--red-bd);
+  font-family:var(--sans); font-size:12px; font-weight:600;
+  cursor:pointer; transition:background .15s; text-decoration:none;
+}
+.btn-clear:hover { background:var(--red-bd); }
+.hist-empty { padding:60px 24px; text-align:center; }
+.hist-empty-icon {
+  width:64px; height:64px; background:var(--surface2); border-radius:16px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; color:var(--muted); margin:0 auto 16px;
+}
+.hist-empty h3 { font-size:16px; font-weight:600; color:var(--navy); margin-bottom:6px; }
+.hist-empty p  { font-size:13px; color:var(--muted); margin-bottom:20px; }
+.btn-primary-sm {
+  display:inline-flex; align-items:center; gap:7px;
+  padding:10px 18px; border-radius:8px; background:var(--blue);
+  color:#fff; font-family:var(--sans); font-size:13.5px; font-weight:600;
+  text-decoration:none; transition:opacity .18s;
+}
+.btn-primary-sm:hover { opacity:.88; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="section-hdr fu">
+  <div class="section-hdr-icon shi-amber"><i class="fa-solid fa-clock-rotate-left"></i></div>
+  <span class="section-hdr-title">Reports History</span>
+</div>
+
+<div class="card fu fu1" style="overflow:hidden;">
+  <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--surface2);flex-wrap:wrap;">
+    <div class="search-wrap">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search by filename..."/>
+    </div>
+    <span style="font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:3px 10px;" id="rowCount">{{ rows|length }} reports</span>
+    <form method="POST" action="{{ url_for('clear_history') }}" style="margin-left:auto;" onsubmit="return confirm('Clear all history? This cannot be undone.');">
+      <button type="submit" class="btn-clear"><i class="fa-solid fa-trash"></i> Clear History</button>
+    </form>
+  </div>
+
+  {% if rows %}
+  <table class="htable" id="historyTable">
+    <thead>
+      <tr><th>#</th><th>Filename</th><th>Date &amp; Time</th><th>Requests</th><th>Errors</th><th>Suspicious</th><th>Download</th></tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr class="history-row">
+        <td style="color:var(--muted);font-family:var(--mono);font-size:11px;">{{ loop.index }}</td>
+        <td><div class="fname-cell"><div class="fname-ico"><i class="fa-solid fa-file-lines"></i></div><span class="fname-txt">{{ row.filename }}</span></div></td>
+        <td><span class="date-txt">{{ row.analyzed_at }}</span></td>
+        <td><span class="badge bdg-blue">{{ row.total_requests }}</span></td>
+        <td>{% if row.error_count > 0 %}<span class="badge bdg-red">{{ row.error_count }}</span>{% else %}<span class="badge bdg-green">0</span>{% endif %}</td>
+        <td>{% if row.suspicious_count > 0 %}<span class="badge bdg-red">{{ row.suspicious_count }}</span>{% else %}<span class="badge bdg-green">0</span>{% endif %}</td>
+        <td><a href="{{ url_for('download', report_id=row.id) }}" class="btn-dl"><i class="fa-solid fa-file-pdf" style="color:#DC2626;"></i> Download</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="hist-empty">
+    <div class="hist-empty-icon"><i class="fa-solid fa-inbox"></i></div>
+    <h3>No reports yet</h3>
+    <p>Analyse a log file to generate your first report.</p>
+    <a href="{{ url_for('upload') }}" class="btn-primary-sm"><i class="fa-solid fa-cloud-arrow-up"></i> Analyse Now</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+var searchInput = document.getElementById('searchInput');
+var rowCount    = document.getElementById('rowCount');
+if (searchInput) {
+  searchInput.addEventListener('input', function() {
+    var term = this.value.toLowerCase().trim();
+    var rows = document.querySelectorAll('.history-row');
+    var visible = 0;
+    rows.forEach(function(row) {
+      var txt = row.querySelector('.fname-txt');
+      var match = txt ? txt.textContent.toLowerCase().indexOf(term) !== -1 : false;
+      row.style.display = match ? '' : 'none';
+      if (match) { visible++; }
+    });
+    if (rowCount) { rowCount.textContent = visible + ' report' + (visible !== 1 ? 's' : ''); }
+  });
+}
+</script>
+{% endblock %}

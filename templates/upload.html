@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+{% block title %}Analyse Logs — LogSentinel{% endblock %}
+{% block topbar_title %}Analyse Logs{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block head_styles %}
+<style>
+.drop-zone {
+  position:relative; border:1.5px dashed var(--border2);
+  border-radius:10px; padding:36px 24px; text-align:center; cursor:pointer;
+  transition:border-color .2s, background .2s; margin-bottom:16px;
+}
+.drop-zone:hover, .drop-zone.active { border-color:var(--blue); background:var(--blue-lt); }
+.drop-zone input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; }
+.drop-icon {
+  width:52px; height:52px; background:var(--blue-lt); border:1px solid var(--blue-md);
+  border-radius:12px; display:flex; align-items:center; justify-content:center;
+  font-size:22px; color:var(--blue); margin:0 auto 14px; transition:transform .2s;
+}
+.drop-zone:hover .drop-icon, .drop-zone.active .drop-icon { transform:scale(1.08); }
+.drop-title { font-size:15px; font-weight:600; color:var(--navy); margin-bottom:5px; }
+.drop-hint  { font-size:13px; color:var(--muted); }
+.file-chosen { display:none; align-items:center; justify-content:center; gap:7px; margin-top:10px; font-family:var(--mono); font-size:12px; color:var(--blue); }
+.btn-run {
+  width:100%; padding:14px; background:var(--blue); border:none; border-radius:9px;
+  color:#fff; font-family:var(--sans); font-size:14px; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  transition:background .18s, transform .15s;
+}
+.btn-run:hover  { background:#1D4FD8; transform:translateY(-1px); }
+.btn-run:active { transform:translateY(0); }
+.btn-run:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.spinner-wrap { display:none; text-align:center; padding:40px; }
+.spin-ring {
+  width:44px; height:44px; border:3px solid var(--border);
+  border-top-color:var(--blue); border-radius:50%;
+  animation:spin .75s linear infinite; margin:0 auto 14px;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+.spin-lbl { font-family:var(--mono); font-size:12px; color:var(--slate); letter-spacing:1px; }
+.res-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+.res-card {
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh);
+  padding:18px 16px; position:relative; overflow:hidden;
+}
+.res-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; }
+.rc-blue::after { background:var(--blue); }
+.rc-navy::after { background:var(--navy2); }
+.rc-red::after  { background:var(--red); }
+.rc-icon { width:30px; height:30px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:13px; margin-bottom:10px; }
+.rc-blue .rc-icon { background:var(--blue-lt); color:var(--blue); }
+.rc-navy .rc-icon { background:#EEF2FF;         color:var(--navy2); }
+.rc-red  .rc-icon { background:var(--red-lt);   color:var(--red); }
+.rc-lbl { font-size:10px; font-weight:600; color:var(--muted); letter-spacing:.5px; margin-bottom:4px; }
+.rc-val { font-size:17px; font-weight:700; color:var(--navy); word-break:break-all; line-height:1.2; }
+.risk-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh); padding:22px; margin-bottom:20px; }
+.risk-top  { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.risk-title { font-size:14px; font-weight:700; color:var(--navy); }
+.risk-badge { font-family:var(--mono); font-size:11px; font-weight:700; padding:4px 12px; border-radius:20px; letter-spacing:.5px; }
+.rb-safe     { background:var(--green-lt); color:var(--green); border:1px solid var(--green-bd); }
+.rb-warning  { background:var(--amber-lt); color:var(--amber); border:1px solid var(--amber-bd); }
+.rb-critical { background:var(--red-lt);   color:var(--red);   border:1px solid var(--red-bd); }
+.risk-bar-bg   { height:10px; background:var(--border); border-radius:99px; overflow:hidden; margin-bottom:8px; }
+.risk-bar-fill { height:100%; border-radius:99px; transition:width 1s ease; }
+.rf-safe     { background:linear-gradient(90deg,#16A34A,#86EFAC); }
+.rf-warning  { background:linear-gradient(90deg,#D97706,#FCD34D); }
+.rf-critical { background:linear-gradient(90deg,#DC2626,#FCA5A5); }
+.risk-meta { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); font-family:var(--mono); }
+.threat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh); overflow:hidden; margin-bottom:20px; }
+.threat-hdr  { display:flex; align-items:center; gap:10px; padding:13px 18px; border-bottom:1px solid var(--border); background:var(--red-lt); }
+.threat-hdr i { color:var(--red); font-size:13px; }
+.threat-hdr-lbl { font-size:13px; font-weight:600; color:var(--red); }
+.threat-count-badge { margin-left:auto; background:#fff; border:1px solid var(--red-bd); color:var(--red); border-radius:20px; padding:2px 10px; font-size:11px; font-weight:700; font-family:var(--mono); }
+.threat-row { display:flex; align-items:center; gap:12px; padding:11px 18px; border-bottom:1px solid var(--border); transition:background .15s; }
+.threat-row:last-child { border-bottom:none; }
+.threat-row:hover { background:var(--surface2); }
+.threat-row-icon { width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px; flex-shrink:0; }
+
+.threat-name { font-family:var(--mono); font-size:13px; color:var(--text); font-weight:500; }
+.threat-risk-badge { margin-left:auto; font-size:10px; font-weight:700; letter-spacing:.8px; border-radius:20px; padding:2px 9px; }
+/* ── Risk badge colors ──────────────────────────────────── */
+/* HIGH RISK  – red   – 16+ requests  */
+.trb-high   { background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; font-weight:700; }
+.tri-high   { background:#FEF2F2; color:#DC2626; }
+/* MEDIUM RISK – orange – 11-15 requests */
+.trb-medium { background:#FFF7ED; color:#C2410C; border:1px solid #FED7AA; font-weight:700; }
+.tri-medium { background:#FFF7ED; color:#C2410C; }
+/* LOW RISK   – yellow – 6-10 requests  */
+.trb-low    { background:#FEFCE8; color:#92400E; border:1px solid #FDE68A; font-weight:700; }
+.tri-low    { background:#FEFCE8; color:#92400E; }
+/* SAFE       – green  – 1-5 requests   */
+.trb-none   { background:#F0FDF4; color:#166534; border:1px solid #86EFAC; font-weight:700; }
+.tri-none   { background:#F0FDF4; color:#166534; }
+.no-threat  { padding:24px; text-align:center; font-size:13.5px; color:var(--green); background:var(--green-lt); }
+.charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+.chart-card  { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh); overflow:hidden; }
+.chart-hdr   { display:flex; align-items:center; gap:9px; padding:13px 18px; border-bottom:1px solid var(--border); }
+.chart-hdr-icon { width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px; }
+.chi-blue { background:var(--blue-lt); color:var(--blue); }
+.chi-navy { background:#EEF2FF;        color:var(--navy2); }
+.chart-ttl { font-size:13px; font-weight:600; color:var(--navy); }
+.chart-sub { font-size:11px; color:var(--muted); margin-left:auto; font-family:var(--mono); }
+.chart-body { padding:16px; height:260px; position:relative; }
+@media (max-width:900px) { .res-grid { grid-template-columns:repeat(2,1fr); } .charts-grid { grid-template-columns:1fr; } }
+@media (max-width:520px)  { .res-grid { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="section-hdr fu">
+  <div class="section-hdr-icon shi-blue"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+  <span class="section-hdr-title">Analyse a Log File</span>
+</div>
+
+{% if error %}
+<div class="banner ban-err fu"><i class="fa-solid fa-circle-exclamation"></i><div>{{ error }}</div></div>
+{% endif %}
+{% if filename %}
+<div class="banner ban-ok fu"><i class="fa-solid fa-circle-check"></i><div>Analysis complete for <b>{{ filename }}</b> &mdash; report saved to history.</div></div>
+{% endif %}
+
+<div class="card fu fu1" style="overflow:hidden; margin-bottom:24px;">
+  <div style="display:flex;align-items:center;gap:10px;padding:14px 22px;border-bottom:1px solid var(--border);background:var(--surface2);">
+    <div style="width:30px;height:30px;background:var(--blue-lt);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--blue);"><i class="fa-solid fa-terminal"></i></div>
+    <span style="font-size:14px;font-weight:600;color:var(--navy);">Upload Log File</span>
+  </div>
+  <div style="padding:24px;">
+    <form method="POST" enctype="multipart/form-data" id="upload-form">
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" name="file" accept=".log,.txt" required id="file-input"/>
+        <div class="drop-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+        <div class="drop-title">Drop your log file here</div>
+        <div class="drop-hint">Click to browse &nbsp;&middot;&nbsp; .log and .txt supported</div>
+        <div class="file-chosen" id="file-chosen">
+          <i class="fa-solid fa-file-lines"></i><span id="fname"></span>
+        </div>
+      </div>
+      <button type="submit" class="btn-run" id="analyze-btn">
+        <i class="fa-solid fa-magnifying-glass-chart"></i> Run Analysis
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="spinner-wrap" id="spinner">
+  <div class="spin-ring"></div>
+  <div class="spin-lbl">SCANNING LOG FILE...</div>
+</div>
+
+{% if result %}
+<div class="fu">
+
+  {% if risk_score is not none %}
+  {% if risk_label == 'CRITICAL' %}
+  {% set risk_cls = 'rb-critical' %}{% set risk_bar = 'rf-critical' %}
+  {% elif risk_label == 'WARNING' %}
+  {% set risk_cls = 'rb-warning' %}{% set risk_bar = 'rf-warning' %}
+  {% else %}
+  {% set risk_cls = 'rb-safe' %}{% set risk_bar = 'rf-safe' %}
+  {% endif %}
+  <div class="risk-wrap fu fu1">
+    <div class="risk-top">
+      <span class="risk-title"><i class="fa-solid fa-shield-halved" style="margin-right:7px;color:var(--blue);"></i>Threat Risk Score</span>
+      <span class="risk-badge {{ risk_cls }}">{{ risk_label }}</span>
+    </div>
+    <div class="risk-bar-bg">
+      <div class="risk-bar-fill {{ risk_bar }}" id="risk-fill" style="width:0%;" data-score="{{ risk_score }}"></div>
+    </div>
+    <div class="risk-meta">
+      <span>0 &mdash; Safe</span>
+      <span style="font-weight:700;">Score: {{ risk_score }}/100</span>
+      <span>100 &mdash; Critical</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="section-hdr" style="margin-bottom:12px;">
+    <div class="section-hdr-icon shi-blue"><i class="fa-solid fa-chart-bar"></i></div>
+    <span class="section-hdr-title">Analysis Results</span>
+  </div>
+  <div class="res-grid fu fu2">
+    <div class="res-card rc-blue">
+      <div class="rc-icon"><i class="fa-solid fa-user"></i></div>
+      <div class="rc-lbl">MOST ACTIVE USER</div>
+      <div class="rc-val">{{ result.most_active_user }}</div>
+    </div>
+    <div class="res-card rc-navy">
+      <div class="rc-icon"><i class="fa-solid fa-globe"></i></div>
+      <div class="rc-lbl">MOST ACTIVE IP</div>
+      <div class="rc-val">{{ result.most_active_ip }}</div>
+    </div>
+    <div class="res-card rc-red">
+      <div class="rc-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="rc-lbl">TOTAL ERRORS</div>
+      <div class="rc-val">{{ result.error_count }}</div>
+    </div>
+  </div>
+
+  <div class="section-hdr" style="margin-bottom:12px;">
+    <div class="section-hdr-icon shi-red"><i class="fa-solid fa-user-secret"></i></div>
+    <span class="section-hdr-title">Threat Intelligence</span>
+  </div>
+  <div class="threat-card fu fu3">
+    <div class="threat-hdr">
+      <i class="fa-solid fa-users"></i>
+      <span class="threat-hdr-lbl">User Activity</span>
+      <span class="threat-count-badge">{{ result.all_users|length }} USERS</span>
+    </div>
+    {% if result.all_users %}
+      {% for user in result.all_users %}
+      {% set req_count = result.user_count[user] %}
+      {% if req_count > high_risk_reqs %}
+      {% set ti = 'HIGH RISK' %}{% set ti_cls = 'trb-high' %}{% set ico_cls = 'tri-high' %}
+      {% elif req_count > medium_risk_reqs %}
+      {% set ti = 'MEDIUM RISK' %}{% set ti_cls = 'trb-medium' %}{% set ico_cls = 'tri-medium' %}
+      {% elif req_count > low_risk_reqs %}
+      {% set ti = 'LOW RISK' %}{% set ti_cls = 'trb-low' %}{% set ico_cls = 'tri-low' %}
+      {% else %}
+      {% set ti = 'SAFE' %}{% set ti_cls = 'trb-none' %}{% set ico_cls = 'tri-none' %}
+      {% endif %}
+      <div class="threat-row">
+        <div class="threat-row-icon {{ ico_cls }}"><i class="fa-solid fa-user"></i></div>
+        <span class="threat-name">{{ user }}</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:8px;">{{ req_count }} reqs</span>
+        <span class="threat-risk-badge {{ ti_cls }}">{{ ti }}</span>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="no-threat"><i class="fa-solid fa-shield-check"></i> No users found in this log file.</div>
+    {% endif %}
+  </div>
+
+  <div class="section-hdr" style="margin-bottom:12px;">
+    <div class="section-hdr-icon shi-navy"><i class="fa-solid fa-chart-column"></i></div>
+    <span class="section-hdr-title">Activity Charts</span>
+  </div>
+  <div class="charts-grid fu fu4">
+    <div class="chart-card">
+      <div class="chart-hdr">
+        <div class="chart-hdr-icon chi-blue"><i class="fa-solid fa-user-group"></i></div>
+        <span class="chart-ttl">User Activity</span>
+        <span class="chart-sub">top {{ result.chart_users|length }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="userChart" data-chart="{{ chart_users_json }}"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hdr">
+        <div class="chart-hdr-icon chi-navy"><i class="fa-solid fa-network-wired"></i></div>
+        <span class="chart-ttl">IP Activity</span>
+        <span class="chart-sub">top {{ result.chart_ips|length }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="ipChart" data-chart="{{ chart_ips_json }}"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endif %}
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+var fileInput  = document.getElementById('file-input');
+var fileChosen = document.getElementById('file-chosen');
+var fnameSpan  = document.getElementById('fname');
+var dropZone   = document.getElementById('drop-zone');
+var uploadForm = document.getElementById('upload-form');
+var analyzeBtn = document.getElementById('analyze-btn');
+var spinner    = document.getElementById('spinner');
+
+if (fileInput) {
+  fileInput.addEventListener('change', function() {
+    if (fileInput.files.length > 0) {
+      fnameSpan.textContent = fileInput.files[0].name;
+      fileChosen.style.display = 'flex';
+      dropZone.classList.add('active');
+    }
+  });
+}
+if (uploadForm) {
+  uploadForm.addEventListener('submit', function() {
+    if (spinner)    { spinner.style.display = 'block'; }
+    if (analyzeBtn) { analyzeBtn.disabled = true; analyzeBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Analyzing...'; }
+  });
+}
+
+function buildBarChart(canvasId, barColor) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) { return; }
+  var raw = canvas.getAttribute('data-chart');
+  if (!raw || raw === 'null') { return; }
+  var dataObj;
+  try { dataObj = JSON.parse(raw); } catch(e) { return; }
+  var labels = Object.keys(dataObj);
+  var values = Object.values(dataObj);
+  if (!labels.length) { return; }
+  var ctx  = canvas.getContext('2d');
+  var grad = ctx.createLinearGradient(0, 0, 0, 240);
+  grad.addColorStop(0, barColor + 'DD');
+  grad.addColorStop(1, barColor + '18');
+  new Chart(ctx, {
+    type: 'bar',
+    data: { labels:labels, datasets:[{ label:'Requests', data:values, backgroundColor:grad, borderColor:barColor, borderWidth:1.5, borderRadius:6, borderSkipped:false }] },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      animation:{ duration:900, easing:'easeOutQuart' },
+      plugins:{
+        legend:{ display:false },
+        tooltip:{ backgroundColor:'#0F2744', titleColor:'#94A3B8', bodyColor:'#F1F5F9', padding:11, cornerRadius:8, displayColors:false, callbacks:{ label:function(item){ return item.raw + ' requests'; } } }
+      },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#94A3B8',maxRotation:30,font:{size:11}}, border:{color:'#E2E8F0'} },
+        y:{ beginAtZero:true, grid:{color:'#F8FAFC'}, ticks:{color:'#94A3B8',precision:0,font:{size:11}}, border:{color:'#E2E8F0',dash:[4,4]} }
+      }
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var fill = document.getElementById('risk-fill');
+  if (fill) {
+    var score = parseInt(fill.getAttribute('data-score') || '0', 10);
+    setTimeout(function() { fill.style.width = score + '%'; }, 200);
+  }
+  buildBarChart('userChart', '#2563EB');
+  buildBarChart('ipChart',   '#1B3A5C');
+});
+</script>
+{% endblock %}

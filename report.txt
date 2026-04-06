@@ -1,0 +1,4 @@
+Log Analysis Report
+Most Active User: user1
+Most Active IP: 192.168.1.1
+Total Errors: 2

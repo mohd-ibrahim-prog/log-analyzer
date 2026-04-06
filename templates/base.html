@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>{% block title %}LogSentinel{% endblock %}</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+{% block head_extra %}{% endblock %}
+<style>
+:root {
+  --sb-w:     220px;
+  --bg:       #F0F4F8;
+  --surface:  #FFFFFF;
+  --surface2: #F8FAFC;
+  --border:   #E2E8F0;
+  --border2:  #CBD5E1;
+  --navy:     #0F2744;
+  --navy2:    #1B3A5C;
+  --blue:     #2563EB;
+  --blue-lt:  #EFF6FF;
+  --blue-md:  #BFDBFE;
+  --slate:    #475569;
+  --muted:    #94A3B8;
+  --red:      #DC2626;
+  --red-lt:   #FEF2F2;
+  --red-bd:   #FECACA;
+  --amber:    #D97706;
+  --amber-lt: #FFFBEB;
+  --amber-bd: #FDE68A;
+  --green:    #16A34A;
+  --green-lt: #F0FDF4;
+  --green-bd: #86EFAC;
+  --text:     #1E293B;
+  --sans:     'Sora', sans-serif;
+  --mono:     'JetBrains Mono', monospace;
+  --r:        10px;
+  --sh:       0 1px 3px rgba(0,0,0,.06), 0 4px 14px rgba(0,0,0,.05);
+  --sh-md:    0 4px 20px rgba(0,0,0,.10);
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+body {
+  font-family:var(--sans); background:var(--bg); color:var(--text);
+  display:flex; min-height:100vh; -webkit-font-smoothing:antialiased;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width:var(--sb-w); background:var(--navy); min-height:100vh;
+  position:fixed; top:0; left:0; bottom:0;
+  display:flex; flex-direction:column; z-index:300;
+  transition:transform .25s ease;
+}
+.sb-brand {
+  display:flex; align-items:center; gap:10px;
+  padding:20px 18px 16px; border-bottom:1px solid rgba(255,255,255,.07);
+  text-decoration:none;
+}
+.sb-icon {
+  width:36px; height:36px; background:var(--blue); border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; color:#fff; flex-shrink:0;
+  box-shadow:0 0 0 3px rgba(37,99,235,.3);
+}
+.sb-name { font-size:15px; font-weight:700; color:#fff; letter-spacing:-.2px; }
+.sb-tag  { font-family:var(--mono); font-size:8px; color:rgba(255,255,255,.35); letter-spacing:1.5px; display:block; margin-top:1px; }
+.sb-section { padding:18px 10px 6px; }
+.sb-section-lbl {
+  font-family:var(--mono); font-size:9px; letter-spacing:1.5px;
+  text-transform:uppercase; color:rgba(255,255,255,.28);
+  padding:0 8px; margin-bottom:5px;
+}
+.nav-link {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; border-radius:8px;
+  text-decoration:none; color:rgba(255,255,255,.55);
+  font-size:13.5px; font-weight:500;
+  transition:background .15s, color .15s;
+  margin-bottom:2px;
+}
+.nav-link i { width:17px; text-align:center; font-size:13px; flex-shrink:0; }
+.nav-link:hover  { background:rgba(255,255,255,.08); color:#fff; }
+.nav-link.active { background:var(--blue); color:#fff; box-shadow:0 2px 8px rgba(37,99,235,.4); }
+.sb-footer {
+  margin-top:auto; padding:14px 18px;
+  border-top:1px solid rgba(255,255,255,.07);
+  font-family:var(--mono); font-size:10px;
+  color:rgba(255,255,255,.28); letter-spacing:.5px;
+}
+
+/* MAIN */
+.main-wrap { margin-left:var(--sb-w); flex:1; display:flex; flex-direction:column; min-height:100vh; }
+
+/* TOPBAR */
+.topbar {
+  height:56px; background:var(--surface); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 28px; gap:12px;
+  position:sticky; top:0; z-index:200;
+}
+.topbar-title { font-size:15px; font-weight:700; color:var(--navy); }
+.topbar-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+.pip {
+  width:7px; height:7px; border-radius:50%; background:var(--green);
+  box-shadow:0 0 0 2px var(--green-bd); animation:pip 2.5s ease infinite;
+}
+@keyframes pip { 0%,100%{opacity:1} 50%{opacity:.3} }
+.pip-label   { font-family:var(--mono); font-size:11px; color:var(--green); }
+.topbar-time { font-family:var(--mono); font-size:11px; color:var(--muted); }
+.hamburger {
+  display:none; background:none; border:1px solid var(--border);
+  border-radius:6px; padding:7px 10px; cursor:pointer; color:var(--slate);
+}
+
+/* PAGE */
+.page { padding:28px; flex:1; }
+
+/* SHARED CARDS */
+.card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r); box-shadow:var(--sh);
+}
+.card-pad { padding:22px; }
+
+/* SECTION HEADER */
+.section-hdr { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.section-hdr-icon {
+  width:30px; height:30px; border-radius:7px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; flex-shrink:0;
+}
+.shi-blue  { background:var(--blue-lt);  color:var(--blue); }
+.shi-red   { background:var(--red-lt);   color:var(--red); }
+.shi-navy  { background:#EEF2FF;          color:var(--navy2); }
+.shi-amber { background:var(--amber-lt); color:var(--amber); }
+.section-hdr-title { font-size:15px; font-weight:700; color:var(--navy); }
+.section-hdr-sub   { font-size:12px; color:var(--muted); margin-left:auto; font-family:var(--mono); }
+
+/* BANNERS */
+.banner {
+  display:flex; align-items:flex-start; gap:11px;
+  padding:13px 16px; border-radius:9px; font-size:13.5px; margin-bottom:20px;
+}
+.banner i { flex-shrink:0; font-size:15px; margin-top:1px; }
+.banner b { color:var(--navy); font-weight:600; }
+.ban-ok  { background:var(--green-lt); border:1px solid var(--green-bd); color:var(--green); }
+.ban-err { background:var(--red-lt);   border:1px solid var(--red-bd);   color:var(--red); }
+
+/* BADGES */
+.badge     { display:inline-flex; align-items:center; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:700; font-family:var(--mono); }
+.bdg-blue  { background:var(--blue-lt);  color:var(--blue);  border:1px solid var(--blue-md); }
+.bdg-red   { background:var(--red-lt);   color:var(--red);   border:1px solid var(--red-bd); }
+.bdg-green { background:var(--green-lt); color:var(--green); border:1px solid var(--green-bd); }
+
+/* TABLE */
+.htable { width:100%; border-collapse:collapse; font-size:13px; }
+.htable thead th {
+  background:var(--surface2); color:var(--muted);
+  font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  padding:10px 16px; border-bottom:1px solid var(--border); text-align:left;
+}
+.htable tbody td { padding:12px 16px; border-bottom:1px solid var(--border); color:var(--text); }
+.htable tbody tr:last-child td { border-bottom:none; }
+.htable tbody tr:hover td { background:var(--surface2); }
+.fname-cell { display:flex; align-items:center; gap:8px; }
+.fname-ico  { width:28px; height:28px; background:var(--blue-lt); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--blue); flex-shrink:0; }
+.fname-txt  { font-family:var(--mono); font-size:12px; color:var(--text); }
+.date-txt   { font-size:12px; color:var(--muted); }
+.btn-dl {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600;
+  background:var(--surface); color:var(--slate);
+  border:1.5px solid var(--border2); text-decoration:none;
+  transition:border-color .15s, color .15s;
+}
+.btn-dl:hover { border-color:var(--blue); color:var(--blue); }
+
+/* ANIMATIONS */
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.fu  { animation:fadeUp .45s ease both; }
+.fu1 { animation-delay:.05s; }
+.fu2 { animation-delay:.1s; }
+.fu3 { animation-delay:.15s; }
+.fu4 { animation-delay:.2s; }
+
+/* RESPONSIVE */
+@media (max-width:768px) {
+  .sidebar { transform:translateX(-100%); }
+  .sidebar.open { transform:translateX(0); }
+  .main-wrap { margin-left:0; }
+  .hamburger { display:block; }
+  .page { padding:20px 16px; }
+}
+@media (max-width:520px) { .topbar { padding:0 16px; } }
+
+</style>
+{% block head_styles %}{% endblock %}
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <a class="sb-brand" href="{{ url_for('dashboard') }}">
+    <div class="sb-icon"><i class="fa-solid fa-shield-halved"></i></div>
+    <div>
+      <div class="sb-name">LogSentinel</div>
+      <span class="sb-tag">THREAT INTELLIGENCE</span>
+    </div>
+  </a>
+  <div class="sb-section">
+    <div class="sb-section-lbl">Navigation</div>
+    <a href="{{ url_for('dashboard') }}" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">
+      <i class="fa-solid fa-chart-pie"></i> Dashboard
+    </a>
+    <a href="{{ url_for('upload') }}" class="nav-link {% if active_page == 'upload' %}active{% endif %}">
+      <i class="fa-solid fa-cloud-arrow-up"></i> Analyse Logs
+    </a>
+    <a href="{{ url_for('history') }}" class="nav-link {% if active_page == 'history' %}active{% endif %}">
+      <i class="fa-solid fa-clock-rotate-left"></i> Reports History
+    </a>
+  </div>
+  <div class="sb-footer">v2.0 &nbsp;&middot;&nbsp; &copy; 2026 LogSentinel</div>
+</aside>
+
+<div class="main-wrap">
+  <div class="topbar">
+    <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <span class="topbar-title">{% block topbar_title %}{% endblock %}</span>
+    <div class="topbar-right">
+      <div class="pip"></div>
+      <span class="pip-label">ONLINE</span>
+      <span class="topbar-time" id="clock"></span>
+    </div>
+  </div>
+  <div class="page">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<script>
+function updateClock() {
+  var now = new Date();
+  var h = String(now.getHours()).padStart(2,'0');
+  var m = String(now.getMinutes()).padStart(2,'0');
+  var s = String(now.getSeconds()).padStart(2,'0');
+  var el = document.getElementById('clock');
+  if (el) { el.textContent = h + ':' + m + ':' + s; }
+}
+updateClock();
+setInterval(updateClock, 1000);
+</script>
+{% block page_scripts %}{% endblock %}
+</body>
+</html>
