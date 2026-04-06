@@ -45,3 +45,5 @@ Designed a risk classification system
 Ensured user data isolation using Flask sessions
 Deployed on cloud using Render
 
+## 📁 Project Structure 
+Screenshots are stored in `static/images/` directory following Flask project structure.
